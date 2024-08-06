@@ -143,6 +143,15 @@ int Left_Wheels_Torque =0, Left_Wheels_Torque_Temp=0;
 /* 							DRIVE_WHEELS_VARIABLES 						*/
 
 
+
+/* 							BT_VARIABLES 						*/
+uint8_t BT_Rx[8], RxBuff[8];
+/* 							BT_VARIABLES 						*/
+
+float Absolute_Position[20];
+int16_t Absolute_Position_Int[20];
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -260,11 +269,46 @@ void CAN_Transmit ( uint8_t NODE, uint8_t Command, float Tx_Data,	uint8_t Data_S
 
 }
 
+float CAN_Reception(uint8_t byte_choice)
+{
+		float Can_Temp;
+	
+	if ( byte_choice == LSB )
+	{
+		for (int k=0; k<=3; k++)
+		{
+			RxBuff[k]= RxData2[k];
+		}
+		memcpy(&Can_Temp, RxBuff,4);
+		
+	}
+	
+	else if ( byte_choice == MSB )
+	{
+		for (int k=0; k<=3; k++)
+		{
+			RxBuff[k]= RxData2[k+4];
+		}
+		memcpy(&Can_Temp, RxBuff,4);
+		
+	}
+	
+	else { }
+
+	return(Can_Temp);
+}
+
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 			HAL_UART_Receive_IT(&huart5,BT_Rx ,sizeof(BT_Rx));
 			BT_Count++;
+}
+
+void Absolute_Position_Reception( uint8_t Node_Id )
+{
+  memcpy(&Absolute_Position[Node_Id],RxData2, sizeof(float)); 
+	Absolute_Position_Int[Node_Id] = Absolute_Position[Node_Id]; 
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan2)
@@ -279,7 +323,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan2)
 	{
 		case HEARTBEAT:  							Node_Id[Received_Node_Id]++;    Axis_State[Received_Node_Id] = RxData2[4]; break;
 		
-//		case ENEST_ID:  							Motor_Velocity[Received_Node_Id]	= CAN_Reception(MSB);  Absolute_Position_Reception (	Received_Node_Id ); 	   break;		
+		case ENEST_ID:  							Motor_Velocity[Received_Node_Id]	= CAN_Reception(MSB);  Absolute_Position_Reception (	Received_Node_Id ); 	   break;		
 
 //		case SENS_EST:  							Motor_Velocity[Received_Node_Id]	= CAN_Reception(MSB); 				  			 	 break;
 //		
